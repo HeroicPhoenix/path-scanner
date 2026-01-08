@@ -1,0 +1,37 @@
+{
+  "schedule": {
+    "cron": "0 1 * * *",
+    "timezone": "Asia/Shanghai"
+  },
+  "retention": {
+    "days": 30
+  },
+  "paths": [
+    "/volume1/music",
+    "/volume1/video",
+    "/volume1/homes"
+  ],
+  "output": {
+    "format": "csv",
+    "directory": "/output",
+    "latest_filename": "scan_latest.csv"
+  },
+  "scan_options": {
+    "follow_symlinks": false,
+    "ignore_missing_path": true
+  },
+  "logging": {
+    "directory": "/logs",
+    "level": "INFO"
+  },
+  "oss": {
+    "enabled": true,
+    "region": "cn-shanghai",
+    "endpoint": "https://oss-cn-shanghai.aliyuncs.com",
+    "bucket": "your-bucket-name",
+    "prefix": "path-scanner/output",
+    "latest_object": "scan_latest.csv",
+    "access_key_id": "AKxxxxxxxx",
+    "access_key_secret": "xxxxxxxx"
+  }
+}
