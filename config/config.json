@@ -28,10 +28,10 @@
     "enabled": true,
     "region": "cn-shanghai",
     "endpoint": "https://oss-cn-shanghai.aliyuncs.com",
-    "bucket": "your-bucket-name",
+    "bucket": "",
     "prefix": "path-scanner/output",
     "latest_object": "scan_latest.csv",
-    "access_key_id": "AKxxxxxxxx",
-    "access_key_secret": "xxxxxxxx"
+    "access_key_id": "",
+    "access_key_secret": ""
   }
 }
