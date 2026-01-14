@@ -1,36 +1,34 @@
 # Path Scanner（路径扫描与清单生成工具）
 
-一个适合 **群晖 NAS / Docker / Linux / macOS** 长期运行的路径扫描工具，用于：
+适合群晖 NAS / Docker / Linux / macOS 长期运行的路径扫描工具：
 - 定期递归扫描指定目录
-- 生成完整的文件 / 文件夹清单 CSV
-- 本地保留历史结果（自动清理）
-- 将 **最新扫描结果 CSV** 上传到 **阿里云 OSS（覆盖式 latest）**
+- 生成文件/文件夹清单 CSV
+- 本地历史自动清理
+- 最新结果覆盖上传到阿里云 OSS
+- 提供 API 触发扫描/上传/清理
 
 ---
 
-## 一、功能特性
+## 1. 功能特性
 
-- ✅ 递归扫描多个路径（自动去重父子路径）
-- ✅ 输出 CSV（目录 + 文件）
-- ✅ 忽略隐藏文件（如 `.DS_Store`）与群晖系统目录 `@eaDir`
-- ✅ 每次生成 `scan_YYYYMMDD_HHMMSS.csv`
-- ✅ 同步生成 `scan_latest.csv`
-- ✅ 自动清理 N 天前的历史 CSV
-- ✅ 使用 **阿里云 OSS Python SDK v2（官方）**
-- ✅ OSS 中始终只保留一个 `scan_latest.csv`
-- ✅ 支持按 N 天间隔上传 OSS（可配置）
-- ✅ 提供 FastAPI 接口：手动触发扫描/上传/清理
-- ✅ 支持 cron 定时任务
-- ✅ 支持 Docker / Docker Compose
-- ✅ 支持本地直接运行
+- 递归扫描多个路径（自动去重父子路径）
+- 输出 CSV（目录 + 文件）
+- 忽略隐藏文件（如 `.DS_Store`）与群晖系统目录 `@eaDir`
+- 每次生成 `scan_YYYYMMDD_HHMMSS.csv`
+- 同步生成 `scan_latest.csv`
+- 自动清理 N 天前历史 CSV
+- OSS 覆盖上传 latest（可配置 N 天游间隔）
+- FastAPI 接口手动触发扫描/上传/清理
+- cron 定时调度
 
 ---
 
-## 二、目录结构
+## 2. 目录结构
 
 ```text
 path-scanner/
 ├── app/
+│   ├── main.py
 │   └── scanner.py
 ├── config/
 │   └── config.json
@@ -42,7 +40,7 @@ path-scanner/
 
 ---
 
-## 三、CSV 输出格式
+## 3. CSV 输出格式
 
 | 列名 | 说明 |
 |---|---|
@@ -53,7 +51,7 @@ path-scanner/
 
 ---
 
-## 四、配置说明（config.json）
+## 4. 配置说明（config.json）
 
 ### 示例
 
@@ -86,8 +84,8 @@ path-scanner/
   "api": {
     "enabled": true,
     "host": "0.0.0.0",
-    "port": 5000,
-    "token": "your-token"
+    "port": 12084,
+    "token": ""
   },
   "oss": {
     "enabled": true,
@@ -96,104 +94,105 @@ path-scanner/
     "bucket": "your-bucket-name",
     "prefix": "path-scanner/output",
     "latest_object": "scan_latest.csv",
-    "upload_interval_days": 1,
+    "upload_interval_days": 7,
     "access_key_id": "AKxxxxxxxx",
     "access_key_secret": "xxxxxxxx"
   }
 }
 ```
 
-### 关键字段说明
+### 关键字段
 
-- `schedule.cron`：cron 表达式（示例为每天 1 点）
+- `schedule.cron`：cron 表达式
 - `retention.days`：本地历史 CSV 保留天数
 - `paths`：需要扫描的路径列表
-- `follow_symlinks`：是否跟随软链接（建议 false）
-- `oss.enabled`：是否启用 OSS 上传
-- `latest_object`：OSS 中 latest CSV 名称（固定覆盖）
-- `upload_interval_days`：OSS 上传间隔天数（为空或 0 表示每次扫描都上传）
-- `api.enabled`：是否启用 API 服务
+- `scan_options.follow_symlinks`：是否跟随软链接
+- `scan_options.ignore_missing_path`：忽略不存在路径
+- `api.enabled`：是否启用 API
 - `api.host`/`api.port`：API 监听地址与端口
 - `api.token`：API 访问令牌（为空则不校验）
+- `oss.enabled`：是否启用 OSS 上传
+- `oss.latest_object`：OSS 中 latest CSV 名称（覆盖式）
+- `oss.upload_interval_days`：上传间隔天数（为空或 0 表示每次都上传）
 
 ---
 
-## 五、本地运行（macOS / Linux）
+## 5. 本地运行
 
-### 1️⃣ 安装依赖
+安装依赖：
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2️⃣ 运行
-
-```bash
-CONFIG_PATH=./config/config.json python app/scanner.py
-```
-
-如需启动 API：
+启动 API（包含定时调度）：
 
 ```bash
 CONFIG_PATH=./config/config.json uvicorn main:app --host 0.0.0.0 --port 12084
 ```
 
-### API 示例
+---
+
+## 6. API 使用
+
+### 6.1 可用接口
+
+- `GET /health` 健康检查
+- `GET /actions` 返回可用动作列表
+- `POST /scan` 触发扫描（等价于 `/actions/scan`）
+- `POST /actions/upload_latest` 上传 latest CSV 到 OSS
+- `POST /actions/cleanup` 清理历史 CSV
+- `GET /jobs/{id}` 查询异步任务状态
+
+### 6.2 调用示例
 
 ```bash
-curl -X POST http://localhost:5000/scan
+curl http://localhost:12084/actions
 ```
 
-携带 Token：
+带 Token：
 
 ```bash
-curl -X POST http://localhost:5000/scan -H "X-API-Token: your-token"
+curl http://localhost:12084/actions -H "X-API-Token: your-token"
 ```
 
-按动作调用：
+触发扫描（异步，默认）：
 
 ```bash
-curl -X POST http://localhost:5000/actions/upload_latest
-curl -X POST http://localhost:5000/actions/cleanup
+curl -X POST http://localhost:12084/scan
 ```
 
 同步执行：
 
 ```bash
-curl -X POST http://localhost:5000/scan -H "Content-Type: application/json" -d '{"mode":"sync"}'
+curl -X POST http://localhost:12084/scan \
+  -H "Content-Type: application/json" \
+  -d '{"mode":"sync"}'
 ```
 
 ---
 
-## 六、Docker 运行
+## 7. Docker 运行
 
-### Dockerfile
+### 7.1 Dockerfile（镜像内默认启动 API）
 
 ```dockerfile
-FROM python:3.10-slim
-
-WORKDIR /app
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY app /app
-
-VOLUME ["/config", "/output", "/logs"]
-
-CMD ["python", "/app/scanner.py"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "12084"]
 ```
 
-### docker-compose.yml
+### 7.2 docker-compose.yml
 
 ```yaml
 services:
   path-scanner:
-    image: machenkai/path-scanner:latest
+    image: crpi-v2fmzydhnzmlpzjc.cn-shanghai.personal.cr.aliyuncs.com/machenkai/path-scanner:latest
     container_name: path-scanner
+    ports:
+      - "12084:12084"
     volumes:
-      - ./config/config.json:/config/config.json:ro
-      - ./output:/output
-      - ./logs:/logs
+      - /volume1/docker/path-scanner/config/config.json:/config/config.json:ro
+      - /volume1/docker/path-scanner/output:/output
+      - /volume1/docker/path-scanner/logs:/logs
       - /volume1:/volume1:ro
     restart: always
 ```
@@ -206,39 +205,23 @@ docker compose up -d
 
 ---
 
-## 七、OSS 行为说明
+## 8. OSS 行为说明
 
-- 每次任务完成后：
-  - 本地生成最新 CSV
-  - 覆盖上传 OSS 中的 `scan_latest.csv`
-- OSS 中：
-  - **始终只有一个 latest 文件**
-  - 不保存历史版本
-- OSS 上传失败：
-  - 不影响本地扫描
-  - 仅记录日志
+- 每次任务完成后生成 latest CSV
+- OSS 中始终只保留一个 latest 文件（覆盖上传）
+- 上传失败不影响本地扫描，只记录日志
 
 ---
 
-## 八、适用场景
+## 9. 适用场景
 
 - 群晖 NAS 文件资产盘点
 - 媒体库清单生成
 - 数据治理 / 文件审计
 - OSS 对外系统拉取最新文件清单
-- 长期定时运维任务
 
 ---
 
-## 九、安全建议
-
-⚠️ 生产环境建议：
-- 使用 **RAM 子账号**
-- 只授予 `PutObject` 权限
-- 可后续改为环境变量方式传递 AK
-
----
-
-## 十、License
+## 10. License
 
 MIT License
