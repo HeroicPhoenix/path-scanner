@@ -67,24 +67,30 @@ def scan_root(root: Path, follow_symlinks: bool):
     ):
         dirpath = Path(dirpath)
 
+        # 跳过隐藏目录和群晖系统目录
+        dirnames[:] = [
+            d for d in dirnames
+            if not (d.startswith(".") or d == "@eaDir")
+        ]
+
         # 目录
         for d in dirnames:
             yield {
                 "type": "dir",
                 "root_path": str(root),
                 "full_path": str(dirpath / d),
-                "name": d,
-                "filename": ""
+                "name": d
             }
 
         # 文件
         for f in filenames:
+            if f.startswith(".") or f == "@eaDir":
+                continue
             yield {
                 "type": "file",
                 "root_path": str(root),
                 "full_path": str(dirpath / f),
-                "name": f,
-                "filename": f
+                "name": f
             }
 
 
@@ -95,8 +101,7 @@ def write_csv(rows, output_file: Path):
         "type",
         "root_path",
         "full_path",
-        "name",
-        "filename"
+        "name"
     ]
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)

@@ -11,7 +11,8 @@
 ## 一、功能特性
 
 - ✅ 递归扫描多个路径（自动去重父子路径）
-- ✅ 输出 CSV（目录 + 文件，文件名单独列）
+- ✅ 输出 CSV（目录 + 文件）
+- ✅ 忽略隐藏文件（如 `.DS_Store`）与群晖系统目录 `@eaDir`
 - ✅ 每次生成 `scan_YYYYMMDD_HHMMSS.csv`
 - ✅ 同步生成 `scan_latest.csv`
 - ✅ 自动清理 N 天前的历史 CSV
@@ -47,7 +48,6 @@ path-scanner/
 | root_path | 扫描根路径 |
 | full_path | 文件或目录完整路径 |
 | name | 目录名或文件名 |
-| filename | 文件名（仅 file 行有值） |
 
 ---
 
