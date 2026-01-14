@@ -2,6 +2,8 @@ services:
   path-scanner:
     image: machenkai/path-scanner:latest
     container_name: path-scanner
+    ports:
+      - "12084:12084"
     volumes:
       - /volume1/docker/path-scanner/config/config.json:/config/config.json:ro
       - /volume1/docker/path-scanner/output:/output
