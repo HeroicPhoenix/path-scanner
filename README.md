@@ -19,6 +19,7 @@
 - ✅ 使用 **阿里云 OSS Python SDK v2（官方）**
 - ✅ OSS 中始终只保留一个 `scan_latest.csv`
 - ✅ 支持按 N 天间隔上传 OSS（可配置）
+- ✅ 提供 Flask API：手动触发扫描/上传/清理
 - ✅ 支持 cron 定时任务
 - ✅ 支持 Docker / Docker Compose
 - ✅ 支持本地直接运行
@@ -82,6 +83,12 @@ path-scanner/
     "directory": "/logs",
     "level": "INFO"
   },
+  "api": {
+    "enabled": true,
+    "host": "0.0.0.0",
+    "port": 5000,
+    "token": "your-token"
+  },
   "oss": {
     "enabled": true,
     "region": "cn-shanghai",
@@ -105,6 +112,9 @@ path-scanner/
 - `oss.enabled`：是否启用 OSS 上传
 - `latest_object`：OSS 中 latest CSV 名称（固定覆盖）
 - `upload_interval_days`：OSS 上传间隔天数（为空或 0 表示每次扫描都上传）
+- `api.enabled`：是否启用 API 服务
+- `api.host`/`api.port`：API 监听地址与端口
+- `api.token`：API 访问令牌（为空则不校验）
 
 ---
 
@@ -120,6 +130,37 @@ pip install -r requirements.txt
 
 ```bash
 CONFIG_PATH=./config/config.json python app/scanner.py
+```
+
+如需启动 API：
+
+```bash
+CONFIG_PATH=./config/config.json python app/api.py
+```
+
+### API 示例
+
+```bash
+curl -X POST http://localhost:5000/scan
+```
+
+携带 Token：
+
+```bash
+curl -X POST http://localhost:5000/scan -H "X-API-Token: your-token"
+```
+
+按动作调用：
+
+```bash
+curl -X POST http://localhost:5000/actions/upload_latest
+curl -X POST http://localhost:5000/actions/cleanup
+```
+
+同步执行：
+
+```bash
+curl -X POST http://localhost:5000/scan -H "Content-Type: application/json" -d '{"mode":"sync"}'
 ```
 
 ---
