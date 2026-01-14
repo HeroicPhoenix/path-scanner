@@ -1,6 +1,6 @@
 services:
   path-scanner:
-    image: machenkai/path-scanner:latest
+    image: crpi-v2fmzydhnzmlpzjc.cn-shanghai.personal.cr.aliyuncs.com/machenkai/path-scanner:latest
     container_name: path-scanner
     ports:
       - "12084:12084"

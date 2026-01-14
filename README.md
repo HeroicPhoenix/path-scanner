@@ -19,7 +19,7 @@
 - ✅ 使用 **阿里云 OSS Python SDK v2（官方）**
 - ✅ OSS 中始终只保留一个 `scan_latest.csv`
 - ✅ 支持按 N 天间隔上传 OSS（可配置）
-- ✅ 提供 Flask API：手动触发扫描/上传/清理
+- ✅ 提供 FastAPI 接口：手动触发扫描/上传/清理
 - ✅ 支持 cron 定时任务
 - ✅ 支持 Docker / Docker Compose
 - ✅ 支持本地直接运行
@@ -135,7 +135,7 @@ CONFIG_PATH=./config/config.json python app/scanner.py
 如需启动 API：
 
 ```bash
-CONFIG_PATH=./config/config.json python app/api.py
+CONFIG_PATH=./config/config.json uvicorn main:app --host 0.0.0.0 --port 12084
 ```
 
 ### API 示例

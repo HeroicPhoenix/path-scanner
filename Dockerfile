@@ -25,5 +25,5 @@ COPY app /app
 # 约定挂载点
 VOLUME ["/config", "/output", "/logs"]
 
-# 启动调度扫描器
-CMD ["python", "/app/scanner.py"]
+# 启动 API（含调度器）
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "12084"]

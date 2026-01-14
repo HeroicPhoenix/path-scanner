@@ -1,3 +1,4 @@
 apscheduler
 alibabacloud-oss-v2
-flask
+fastapi
+uvicorn
