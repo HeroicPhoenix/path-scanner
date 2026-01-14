@@ -20,6 +20,7 @@ CONFIG_PATH = os.environ.get(
 )
 
 LATEST_CSV_NAME = "scan_latest.csv"
+OSS_UPLOAD_MARKER = ".last_oss_upload"
 
 
 # ---------- 配置 ----------
@@ -140,13 +141,40 @@ def cleanup_old_outputs(output_dir: Path, keep_days: int):
 
 # ---------- OSS（v2 SDK）：上传 latest CSV ----------
 
-def upload_latest_csv_to_oss(config: dict, latest_csv: Path):
+def should_upload_to_oss(oss_cfg: dict, output_dir: Path) -> bool:
+    interval_days = oss_cfg.get("upload_interval_days")
+    if not interval_days:
+        return True
+
+    marker_path = output_dir / OSS_UPLOAD_MARKER
+    if not marker_path.exists():
+        return True
+
+    try:
+        last_ts = float(marker_path.read_text(encoding="utf-8").strip())
+    except (ValueError, OSError):
+        return True
+
+    elapsed = time.time() - last_ts
+    return elapsed >= interval_days * 86400
+
+
+def mark_oss_upload(output_dir: Path):
+    marker_path = output_dir / OSS_UPLOAD_MARKER
+    marker_path.write_text(str(time.time()), encoding="utf-8")
+
+
+def upload_latest_csv_to_oss(config: dict, latest_csv: Path, output_dir: Path):
     oss_cfg = config.get("oss")
     if not oss_cfg or not oss_cfg.get("enabled", False):
         return
 
     if not latest_csv.exists():
         logging.warning("latest CSV 不存在，跳过 OSS 上传")
+        return
+
+    if not should_upload_to_oss(oss_cfg, output_dir):
+        logging.info("未到 OSS 上传间隔，跳过本次上传")
         return
 
     try:
@@ -183,6 +211,7 @@ def upload_latest_csv_to_oss(config: dict, latest_csv: Path):
             object_key,
             result.request_id
         )
+        mark_oss_upload(output_dir)
 
     except Exception as e:
         logging.exception("上传 latest CSV 到 OSS 失败：%s", e)
@@ -234,7 +263,7 @@ def scan_task(config: dict):
         cleanup_old_outputs(out_dir, retention_days)
 
     # ---------- OSS 上传 latest CSV ----------
-    upload_latest_csv_to_oss(config, latest_csv)
+    upload_latest_csv_to_oss(config, latest_csv, out_dir)
 
 
 # ---------- 启动 ----------

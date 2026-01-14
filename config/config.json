@@ -31,6 +31,7 @@
     "bucket": "",
     "prefix": "path-scanner/output",
     "latest_object": "scan_latest.csv",
+    "upload_interval_days": 7,
     "access_key_id": "",
     "access_key_secret": ""
   }

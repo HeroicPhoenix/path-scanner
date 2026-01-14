@@ -18,6 +18,7 @@
 - ✅ 自动清理 N 天前的历史 CSV
 - ✅ 使用 **阿里云 OSS Python SDK v2（官方）**
 - ✅ OSS 中始终只保留一个 `scan_latest.csv`
+- ✅ 支持按 N 天间隔上传 OSS（可配置）
 - ✅ 支持 cron 定时任务
 - ✅ 支持 Docker / Docker Compose
 - ✅ 支持本地直接运行
@@ -88,6 +89,7 @@ path-scanner/
     "bucket": "your-bucket-name",
     "prefix": "path-scanner/output",
     "latest_object": "scan_latest.csv",
+    "upload_interval_days": 1,
     "access_key_id": "AKxxxxxxxx",
     "access_key_secret": "xxxxxxxx"
   }
@@ -102,6 +104,7 @@ path-scanner/
 - `follow_symlinks`：是否跟随软链接（建议 false）
 - `oss.enabled`：是否启用 OSS 上传
 - `latest_object`：OSS 中 latest CSV 名称（固定覆盖）
+- `upload_interval_days`：OSS 上传间隔天数（为空或 0 表示每次扫描都上传）
 
 ---
 
